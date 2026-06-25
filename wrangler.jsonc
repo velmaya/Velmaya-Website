@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "velmaya",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  // Env vars/secrets (Supabase, Razorpay, R2) are added here as the project
+  // grows, via `wrangler secret put <NAME>` for production rather than plaintext.
+  "vars": {}
+}

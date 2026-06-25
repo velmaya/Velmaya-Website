@@ -1,0 +1,112 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Velmaya brand palette — derived from logo (taupe/mocha + cream) */
+  --background: #faf6f0;       /* warm cream */
+  --foreground: #3a322c;       /* deep mocha-brown text */
+
+  --card: #ffffff;
+  --card-foreground: #3a322c;
+
+  --popover: #ffffff;
+  --popover-foreground: #3a322c;
+
+  --primary: #6f6258;          /* taupe/mocha — logo background */
+  --primary-foreground: #faf6f0;
+
+  --secondary: #ece4d8;        /* light sand */
+  --secondary-foreground: #3a322c;
+
+  --muted: #f1ece3;
+  --muted-foreground: #7a6f63;
+
+  --accent: #b08d57;           /* warm gold accent for CTAs/highlights */
+  --accent-foreground: #faf6f0;
+
+  --destructive: #b3463f;
+  --destructive-foreground: #faf6f0;
+
+  --border: #e3dac9;
+  --input: #e3dac9;
+  --ring: #6f6258;
+
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: #2a2520;
+  --foreground: #f1ece3;
+
+  --card: #352f28;
+  --card-foreground: #f1ece3;
+
+  --popover: #352f28;
+  --popover-foreground: #f1ece3;
+
+  --primary: #c9b89e;
+  --primary-foreground: #2a2520;
+
+  --secondary: #44392f;
+  --secondary-foreground: #f1ece3;
+
+  --muted: #3b332c;
+  --muted-foreground: #b3a795;
+
+  --accent: #b08d57;
+  --accent-foreground: #2a2520;
+
+  --destructive: #d97a72;
+  --destructive-foreground: #2a2520;
+
+  --border: #44392f;
+  --input: #44392f;
+  --ring: #c9b89e;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-display: var(--font-velmaya-serif);
+  --font-sans: var(--font-velmaya-sans);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+    outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+}
