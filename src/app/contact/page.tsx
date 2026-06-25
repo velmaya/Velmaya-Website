@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Mail } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { ContactForm } from "@/components/forms/contact-form";
 import { InstagramIcon, WhatsappIcon } from "@/components/brand/icons";
 import {
   siteConfig,
@@ -80,32 +79,8 @@ export default function ContactPage() {
             </p>
           </div>
 
-          {/* form (fallback) */}
-          <form className="rounded-xl border border-border bg-card p-6">
-            <h2 className="font-display text-xl text-foreground">
-              Send a message
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Prefer not to use WhatsApp? Drop us a note.
-            </p>
-            <div className="mt-5 space-y-4">
-              <Input type="text" required placeholder="Your name" />
-              <Input type="email" required placeholder="Email address" />
-              <Input type="text" placeholder="Order number (optional)" />
-              <textarea
-                required
-                rows={4}
-                placeholder="Your message"
-                className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-              <Button type="submit" className="w-full">
-                Send message
-              </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                This form is wired to email/WhatsApp delivery in a later phase.
-              </p>
-            </div>
-          </form>
+          {/* form */}
+          <ContactForm />
         </div>
       </section>
     </>

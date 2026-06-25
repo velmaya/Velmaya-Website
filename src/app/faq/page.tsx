@@ -3,6 +3,8 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { faqs } from "@/lib/faq";
+import { JsonLd } from "@/components/seo/json-ld";
+import { faqSchema } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -13,6 +15,7 @@ export const metadata: Metadata = {
 export default function FaqPage() {
   return (
     <>
+      <JsonLd data={faqSchema(faqs)} />
       <PageHeader
         eyebrow="Help"
         title="Frequently asked questions"

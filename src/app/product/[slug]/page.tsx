@@ -4,7 +4,11 @@ import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { ProductGallery } from "@/components/product/product-gallery";
 import { VariantSelector } from "@/components/product/variant-selector";
+import { PdpTrust } from "@/components/product/pdp-trust";
+import { ProductInfo } from "@/components/product/product-info";
 import { ProductCard } from "@/components/product/product-card";
+import { JsonLd } from "@/components/seo/json-ld";
+import { productSchema, breadcrumbSchema } from "@/lib/seo/schema";
 import { categories } from "@/lib/site-config";
 import {
   getProductBySlug,
@@ -46,8 +50,19 @@ export default async function ProductPage({
   const category = categories.find((c) => c.slug === product.categorySlug);
   const related = await getRelatedProducts(product);
 
+  const breadcrumbItems = [
+    { name: "Shop", url: "/shop" },
+    ...(category
+      ? [{ name: category.name, url: `/shop/${category.slug}` }]
+      : []),
+    { name: product.name, url: `/product/${product.slug}` },
+  ];
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <JsonLd data={productSchema(product)} />
+      <JsonLd data={breadcrumbSchema(breadcrumbItems)} />
+
       {/* breadcrumb */}
       <nav className="flex items-center gap-1 text-sm text-muted-foreground">
         <Link href="/shop" className="hover:text-foreground">
@@ -81,24 +96,9 @@ export default async function ProductPage({
             <VariantSelector product={product} />
           </div>
 
-          <div className="mt-8 space-y-6 border-t border-border pt-8">
-            <div>
-              <h2 className="font-display text-lg text-foreground">Details</h2>
-              <p className="mt-2 text-foreground/80">{product.description}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="font-medium text-foreground">Fabric</p>
-                <p className="mt-1 text-muted-foreground">{product.fabric}</p>
-              </div>
-              <div>
-                <p className="font-medium text-foreground">Care</p>
-                <p className="mt-1 text-muted-foreground">
-                  {product.careInstructions}
-                </p>
-              </div>
-            </div>
-          </div>
+          <PdpTrust />
+
+          <ProductInfo product={product} />
         </div>
       </div>
 

@@ -2,8 +2,7 @@ import Link from "next/link";
 import { Mail } from "lucide-react";
 import { InstagramIcon, WhatsappIcon } from "@/components/brand/icons";
 import { BrandLogo } from "@/components/brand/brand-logo";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { NewsletterForm } from "@/components/forms/newsletter-form";
 import {
   footerNav,
   siteConfig,
@@ -53,17 +52,7 @@ export function Footer() {
               {siteConfig.description}
             </p>
 
-            <form className="mt-6 flex max-w-sm gap-2">
-              <Input
-                type="email"
-                required
-                placeholder="Email for new drops"
-                className="border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/50"
-              />
-              <Button type="submit" variant="accent">
-                Join
-              </Button>
-            </form>
+            <NewsletterForm />
 
             <div className="mt-6 flex items-center gap-3">
               <a

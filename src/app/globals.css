@@ -23,7 +23,8 @@
   --muted: #f1ece3;
   --muted-foreground: #7a6f63;
 
-  --accent: #b08d57;           /* warm gold accent for CTAs/highlights */
+  --accent: #8a6a3a;           /* deep bronze-gold — WCAG AA (~4.6:1) on cream,
+                                  as link text and as CTA bg with cream text */
   --accent-foreground: #faf6f0;
 
   --destructive: #b3463f;

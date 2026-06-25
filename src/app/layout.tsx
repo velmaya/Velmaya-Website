@@ -3,6 +3,8 @@ import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { JsonLd } from "@/components/seo/json-ld";
+import { organizationSchema, websiteSchema } from "@/lib/seo/schema";
 
 const velmayaSerif = Fraunces({
   variable: "--font-velmaya-serif",
@@ -46,6 +48,8 @@ export default function RootLayout({
       <body
         className={`${velmayaSerif.variable} ${velmayaSans.variable} antialiased`}
       >
+        <JsonLd data={organizationSchema()} />
+        <JsonLd data={websiteSchema()} />
         <Header />
         <main className="min-h-screen">{children}</main>
         <Footer />

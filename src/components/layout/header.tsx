@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Menu, ShoppingBag, Search } from "lucide-react";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { MegaMenu } from "@/components/layout/mega-menu";
@@ -11,6 +11,13 @@ import { cn } from "@/lib/utils";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Return focus to the trigger when the drawer closes (focus-management best practice).
+  const closeMobile = () => {
+    setMobileOpen(false);
+    menuButtonRef.current?.focus();
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
@@ -22,10 +29,12 @@ export function Header() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* left: mobile menu button */}
         <button
+          ref={menuButtonRef}
           type="button"
           onClick={() => setMobileOpen(true)}
           className="flex items-center justify-center rounded-md p-1 text-foreground md:hidden"
           aria-label="Open menu"
+          aria-expanded={mobileOpen}
         >
           <Menu className="h-6 w-6" />
         </button>
@@ -70,7 +79,7 @@ export function Header() {
         </div>
       </div>
 
-      <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      <MobileNav open={mobileOpen} onClose={closeMobile} />
     </header>
   );
 }
