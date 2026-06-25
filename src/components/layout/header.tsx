@@ -6,12 +6,14 @@ import { Menu, ShoppingBag, Search } from "lucide-react";
 import { BrandLogo } from "@/components/brand/brand-logo";
 import { MegaMenu } from "@/components/layout/mega-menu";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { useCart } from "@/components/cart/cart-provider";
 import { mainNav } from "@/lib/site-config";
 import { cn } from "@/lib/utils";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const { count, openCart } = useCart();
 
   // Return focus to the trigger when the drawer closes (focus-management best practice).
   const closeMobile = () => {
@@ -69,13 +71,19 @@ export function Header() {
           >
             <Search className="h-5 w-5" />
           </Link>
-          <Link
-            href="/cart"
-            aria-label="Cart"
-            className="rounded-md p-2 text-foreground/80 hover:text-foreground"
+          <button
+            type="button"
+            onClick={openCart}
+            aria-label={`Bag${count > 0 ? `, ${count} item${count === 1 ? "" : "s"}` : ""}`}
+            className="relative rounded-md p-2 text-foreground/80 hover:text-foreground"
           >
             <ShoppingBag className="h-5 w-5" />
-          </Link>
+            {count > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-medium text-accent-foreground">
+                {count}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 

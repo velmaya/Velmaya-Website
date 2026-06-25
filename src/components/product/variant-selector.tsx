@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { WhatsappIcon } from "@/components/brand/icons";
+import { useCart } from "@/components/cart/cart-provider";
 import { cn } from "@/lib/utils";
 import { whatsappLink } from "@/lib/site-config";
 import {
@@ -18,8 +20,29 @@ const LOW_STOCK_THRESHOLD = 3;
 
 export function VariantSelector({ product }: { product: Product }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showSizeHint, setShowSizeHint] = useState(false);
   const selected = product.variants.find((v) => v.id === selectedId) ?? null;
   const onSale = isOnSale(product);
+  const { addItem } = useCart();
+
+  function addToBag() {
+    if (!selected) {
+      setShowSizeHint(true);
+      return;
+    }
+    const image = product.images[0];
+    addItem({
+      variantId: selected.id,
+      productId: product.id,
+      productSlug: product.slug,
+      productName: product.name,
+      size: selected.size,
+      unitPrice: effectivePrice(selected),
+      imageUrl: image?.url,
+      imageAlt: image?.alt ?? product.name,
+      qty: 1,
+    });
+  }
 
   const orderMessage = selected
     ? `Hi Velmaya! I'd like to order the ${product.name} in size ${selected.size} (${formatINR(effectivePrice(selected))}). SKU: ${selected.sku}`
@@ -76,7 +99,10 @@ export function VariantSelector({ product }: { product: Product }) {
                 key={v.id}
                 type="button"
                 disabled={out}
-                onClick={() => setSelectedId(v.id)}
+                onClick={() => {
+                  setSelectedId(v.id);
+                  setShowSizeHint(false);
+                }}
                 className={cn(
                   "min-w-12 rounded-md border px-4 py-2.5 text-sm transition-colors",
                   out &&
@@ -100,15 +126,29 @@ export function VariantSelector({ product }: { product: Product }) {
             Only {selected.stockQty} left in {selected.size}
           </p>
         )}
+        {showSizeHint && !selected && (
+          <p role="alert" className="mt-2 text-sm text-destructive">
+            Please select a size first.
+          </p>
+        )}
       </div>
 
       {/* actions */}
       <div className="mt-8 space-y-3">
         <Button
-          asChild
+          type="button"
           size="lg"
           className="w-full"
-          variant="accent"
+          onClick={addToBag}
+        >
+          <ShoppingBag className="h-5 w-5" />
+          Add to bag
+        </Button>
+        <Button
+          asChild
+          size="lg"
+          variant="outline"
+          className="w-full"
         >
           <a
             href={whatsappLink(orderMessage)}
@@ -120,8 +160,7 @@ export function VariantSelector({ product }: { product: Product }) {
           </a>
         </Button>
         <p className="text-center text-xs text-muted-foreground">
-          Secure online checkout opens with our first collection. For now, we
-          confirm orders personally on WhatsApp.
+          Prefer to order over chat? WhatsApp works too — a real person replies.
         </p>
       </div>
     </div>
