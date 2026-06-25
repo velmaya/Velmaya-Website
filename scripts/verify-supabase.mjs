@@ -242,9 +242,14 @@ async function assertMovement(orderId, reason, label) {
 }
 
 async function cleanup() {
-  // Orders cascade to order_items, inventory_reservations, payment_attempts.
+  // Delete child rows explicitly (don't rely on ON DELETE CASCADE — e.g.
+  // payment_attempts may not cascade), then the order.
   for (const o of [ids.order1, ids.order2, ids.order3].filter(Boolean)) {
+    await admin.from("webhook_events").delete().eq("order_id", o);
+    await admin.from("payment_attempts").delete().eq("order_id", o);
     await admin.from("inventory_movements").delete().eq("order_id", o);
+    await admin.from("inventory_reservations").delete().eq("order_id", o);
+    await admin.from("order_items").delete().eq("order_id", o);
     await admin.from("orders").delete().eq("id", o);
   }
   await admin.from("webhook_events").delete().eq("event_id", `${TAG}-evt`);
