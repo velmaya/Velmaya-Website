@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsappIcon } from "@/components/brand/icons";
 import { Field } from "@/components/checkout/field";
 import { useCart } from "@/components/cart/cart-provider";
-import { prepareCheckout, placeOrder } from "@/lib/checkout/actions";
+import {
+  prepareCheckout,
+  placeOrder,
+  confirmPayment,
+} from "@/lib/checkout/actions";
+import { openRazorpayCheckout } from "@/lib/razorpay/checkout-client";
 import {
   emptyShipping,
   validateShipping,
@@ -22,12 +28,14 @@ type Status =
   | { kind: "loading" }
   | { kind: "ready" }
   | { kind: "submitting" }
+  | { kind: "paying" }
   | { kind: "unavailable"; orderSummary: string }
   | { kind: "placed"; orderNumber: string }
   | { kind: "error"; message: string };
 
 export function CheckoutClient() {
-  const { items, subtotal } = useCart();
+  const router = useRouter();
+  const { items, subtotal, clear } = useCart();
   const [cart, setCart] = useState<RepricedCart | null>(null);
   const [values, setValues] = useState<ShippingValues>(emptyShipping);
   const [errors, setErrors] = useState<ShippingErrors>({});
@@ -72,7 +80,7 @@ export function CheckoutClient() {
     const result = await placeOrder({ items, shipping: values });
 
     if (result.ok) {
-      setStatus({ kind: "placed", orderNumber: result.orderNumber });
+      await launchPayment(result);
       return;
     }
     switch (result.reason) {
@@ -92,6 +100,48 @@ export function CheckoutClient() {
         break;
       default:
         setStatus({ kind: "error", message: result.message });
+    }
+  }
+
+  async function launchPayment(order: {
+    orderId: string;
+    orderNumber: string;
+    razorpayOrderId: string;
+    amountPaise: number;
+  }) {
+    setStatus({ kind: "paying" });
+    const { launched } = await openRazorpayCheckout({
+      razorpayOrderId: order.razorpayOrderId,
+      amountPaise: order.amountPaise,
+      prefill: {
+        name: values.fullName,
+        email: values.email || undefined,
+        contact: values.phone,
+      },
+      onSuccess: async (r) => {
+        const confirmed = await confirmPayment({
+          orderId: order.orderId,
+          razorpayOrderId: r.razorpay_order_id,
+          razorpayPaymentId: r.razorpay_payment_id,
+          signature: r.razorpay_signature,
+        });
+        if (confirmed.ok) {
+          clear();
+          router.push(
+            `/checkout/confirmation?order=${encodeURIComponent(confirmed.orderNumber)}`
+          );
+        } else {
+          setStatus({ kind: "error", message: confirmed.message });
+        }
+      },
+      onDismiss: () => setStatus({ kind: "ready" }),
+    });
+    if (!launched) {
+      setStatus({
+        kind: "error",
+        message:
+          "Payment couldn't be started. Please try again, or order on WhatsApp.",
+      });
     }
   }
 
@@ -207,11 +257,19 @@ export function CheckoutClient() {
           )}
 
           <Button type="submit" size="lg" className="w-full"
-            disabled={status.kind === "submitting" || status.kind === "loading"}>
-            {status.kind === "submitting" ? "Placing order…" : "Place order"}
+            disabled={
+              status.kind === "submitting" ||
+              status.kind === "loading" ||
+              status.kind === "paying"
+            }>
+            {status.kind === "submitting"
+              ? "Placing order…"
+              : status.kind === "paying"
+                ? "Opening secure payment…"
+                : "Pay securely"}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Secure payment via Razorpay opens in the next step.
+            Secure payment via Razorpay. You can also order on WhatsApp.
           </p>
         </form>
 

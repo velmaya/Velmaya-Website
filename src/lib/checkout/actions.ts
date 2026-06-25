@@ -1,6 +1,9 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createRazorpayOrder } from "@/lib/razorpay/client";
+import { verifyRazorpaySignature } from "@/lib/razorpay/verify";
+import { finalizeOrderPaid } from "@/lib/orders/finalize";
 import type { CartItem } from "@/lib/cart/types";
 import { repriceCart } from "./reprice";
 import {
@@ -17,6 +20,10 @@ function supabaseConfigured() {
   );
 }
 
+function razorpayConfigured() {
+  return !!process.env.RAZORPAY_KEY_ID && !!process.env.RAZORPAY_KEY_SECRET;
+}
+
 // Authoritative summary for the checkout page — recomputed server-side.
 export async function prepareCheckout(
   items: CartItem[]
@@ -25,16 +32,23 @@ export async function prepareCheckout(
 }
 
 export type PlaceOrderResult =
-  | { ok: true; orderId: string; orderNumber: string }
+  | {
+      ok: true;
+      orderId: string;
+      orderNumber: string;
+      razorpayOrderId: string;
+      amountPaise: number;
+    }
   | { ok: false; reason: "invalid"; errors: ShippingErrors }
   | { ok: false; reason: "empty" }
   | { ok: false; reason: "stock_changed"; cart: RepricedCart }
   | { ok: false; reason: "checkout_unavailable" }
   | { ok: false; reason: "error"; message: string };
 
-// Creates the order in `pending_payment` and reserves stock. The Razorpay
-// order/handoff is added in the next stage (M5.3); this stage stops at a
-// persisted, stock-reserved order. Returns a typed result for the UI.
+// Creates the order in `pending_payment`, reserves stock, opens a Razorpay
+// order, and returns the handoff so the client can launch Razorpay Checkout.
+// Fulfillment is finalized later by the verified webhook (and the browser
+// callback) — see confirmPayment + the webhook route.
 export async function placeOrder(payload: {
   items: CartItem[];
   shipping: ShippingValues;
@@ -52,8 +66,10 @@ export async function placeOrder(payload: {
   if (!cart.hasPurchasable || cart.hasChanges)
     return { ok: false, reason: "stock_changed", cart };
 
-  // Until the Supabase project + M5 migration are live, stop gracefully here.
-  if (!supabaseConfigured()) return { ok: false, reason: "checkout_unavailable" };
+  // Online checkout needs both Supabase and Razorpay configured; otherwise fall
+  // back gracefully to the WhatsApp order flow (no orphan order is created).
+  if (!supabaseConfigured() || !razorpayConfigured())
+    return { ok: false, reason: "checkout_unavailable" };
 
   try {
     const supabase = createSupabaseServerClient();
@@ -140,7 +156,45 @@ export async function placeOrder(payload: {
       return { ok: false, reason: "stock_changed", cart };
     }
 
-    return { ok: true, orderId: order.id, orderNumber: order.order_number };
+    // 6. Open a Razorpay order for the authoritative total (in paise). On
+    // failure, release the hold and cancel so no stock is stranded.
+    let rzp;
+    try {
+      rzp = await createRazorpayOrder({
+        amountPaise: Math.round(cart.total * 100),
+        receipt: order.order_number,
+      });
+    } catch {
+      await supabase.rpc("release_reservations", { p_order_id: order.id });
+      await supabase
+        .from("orders")
+        .update({ status: "cancelled", payment_status: "failed" })
+        .eq("id", order.id);
+      return {
+        ok: false,
+        reason: "error",
+        message: "Could not start payment. Please try again.",
+      };
+    }
+
+    await supabase
+      .from("orders")
+      .update({ razorpay_order_id: rzp.id })
+      .eq("id", order.id);
+    await supabase.from("payment_attempts").insert({
+      order_id: order.id,
+      razorpay_order_id: rzp.id,
+      amount: cart.total,
+      status: "created",
+    });
+
+    return {
+      ok: true,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      razorpayOrderId: rzp.id,
+      amountPaise: rzp.amount,
+    };
   } catch (err) {
     return {
       ok: false,
@@ -148,4 +202,43 @@ export async function placeOrder(payload: {
       message: err instanceof Error ? err.message : "Unexpected error",
     };
   }
+}
+
+export type ConfirmPaymentResult =
+  | { ok: true; orderNumber: string }
+  | { ok: false; message: string };
+
+// Browser success callback from Razorpay Checkout. Verifies the signature and
+// finalizes the order. This is a UX convenience — the webhook is the
+// authoritative finalizer, and finalizeOrderPaid is idempotent, so whichever
+// arrives first wins and the other is a no-op.
+export async function confirmPayment(input: {
+  orderId: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  signature: string;
+}): Promise<ConfirmPaymentResult> {
+  const valid = verifyRazorpaySignature({
+    orderId: input.razorpayOrderId,
+    paymentId: input.razorpayPaymentId,
+    signature: input.signature,
+  });
+  if (!valid) return { ok: false, message: "Payment could not be verified." };
+
+  const supabase = createSupabaseServerClient();
+  const result = await finalizeOrderPaid(supabase, {
+    orderId: input.orderId,
+    razorpayPaymentId: input.razorpayPaymentId,
+  });
+
+  if (result.status === "error" || result.status === "not_found")
+    return { ok: false, message: "We couldn't confirm your order. Our team will reach out." };
+
+  const { data } = await supabase
+    .from("orders")
+    .select("order_number")
+    .eq("id", input.orderId)
+    .single();
+
+  return { ok: true, orderNumber: data?.order_number ?? "" };
 }

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "verify:supabase": "node --env-file=.env.local scripts/verify-supabase.mjs",
+    "verify:razorpay": "node --env-file=.env.local scripts/verify-razorpay.mjs",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"

@@ -13,5 +13,28 @@ export function verifyRazorpaySignature(params: {
     .update(`${params.orderId}|${params.paymentId}`)
     .digest("hex");
 
-  return expected === params.signature;
+  return timingSafeEqualHex(expected, params.signature);
+}
+
+// Webhook signature: HMAC-SHA256(rawBody, webhook_secret). The raw, unparsed
+// request body must be used — re-serialising JSON would change the bytes and
+// break the signature. This is the authoritative proof a webhook is from Razorpay.
+export function verifyWebhookSignature(params: {
+  rawBody: string;
+  signature: string | null;
+}) {
+  if (!params.signature) return false;
+  const expected = createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET!)
+    .update(params.rawBody)
+    .digest("hex");
+
+  return timingSafeEqualHex(expected, params.signature);
+}
+
+// Constant-time hex compare to avoid timing side-channels on signature checks.
+function timingSafeEqualHex(a: string, b: string) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
