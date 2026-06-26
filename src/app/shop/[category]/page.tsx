@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProductListing } from "@/components/product/product-listing";
 import { categories } from "@/lib/site-config";
-import { getProductsByCategory } from "@/lib/products";
+import { getProductsByCategory } from "@/lib/products/queries";
 import { cn } from "@/lib/utils";
 
 export function generateStaticParams() {

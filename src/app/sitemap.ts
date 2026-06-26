@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { siteConfig, categories } from "@/lib/site-config";
-import { getAllProductSlugs } from "@/lib/products";
+import { getAllProductSlugs } from "@/lib/products/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;

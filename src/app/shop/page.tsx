@@ -3,7 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/layout/page-header";
 import { ProductListing } from "@/components/product/product-listing";
 import { categories } from "@/lib/site-config";
-import { getAllProducts } from "@/lib/products";
+import { getAllProducts } from "@/lib/products/queries";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {

@@ -10,13 +10,12 @@ import { ProductCard } from "@/components/product/product-card";
 import { JsonLd } from "@/components/seo/json-ld";
 import { productSchema, breadcrumbSchema } from "@/lib/seo/schema";
 import { categories } from "@/lib/site-config";
+import { priceRange, formatINR } from "@/lib/products";
 import {
   getProductBySlug,
   getAllProductSlugs,
   getRelatedProducts,
-  priceRange,
-  formatINR,
-} from "@/lib/products";
+} from "@/lib/products/queries";
 
 export async function generateStaticParams() {
   const slugs = await getAllProductSlugs();

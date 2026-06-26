@@ -1,5 +1,6 @@
 import "server-only";
-import { getProductBySlug, effectivePrice } from "@/lib/products";
+import { effectivePrice } from "@/lib/products";
+import { getProductBySlug } from "@/lib/products/queries";
 import { computeShippingFee } from "@/lib/commerce/config";
 import type { CartItem } from "@/lib/cart/types";
 import type { RepricedCart, RepricedLine } from "./schema";

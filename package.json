@@ -7,8 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "seed:catalogue": "node --env-file=.env.local scripts/seed-catalogue.mjs",
     "verify:supabase": "node --env-file=.env.local scripts/verify-supabase.mjs",
+    "verify:journey": "node --env-file=.env.local scripts/verify-journey.mjs",
     "verify:razorpay": "node --env-file=.env.local scripts/verify-razorpay.mjs",
+    "reconcile:payments": "node --env-file=.env.local scripts/reconcile-payments.mjs",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
