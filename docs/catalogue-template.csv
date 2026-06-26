@@ -1,0 +1,7 @@
+slug,name,category_slug,collections,description,fabric,care_instructions,base_price,size,sku,price,sale_price,stock_qty,is_published
+example-cotton-kurti,Example Cotton Kurti,kurtis,launch-edit,A sample straight-cut cotton kurti.,100% cotton,Machine wash cold.,1299,XS,VLM-EX-KURTI-XS,1299,,4,true
+example-cotton-kurti,Example Cotton Kurti,kurtis,launch-edit,A sample straight-cut cotton kurti.,100% cotton,Machine wash cold.,1299,S,VLM-EX-KURTI-S,1299,,8,true
+example-cotton-kurti,Example Cotton Kurti,kurtis,launch-edit,A sample straight-cut cotton kurti.,100% cotton,Machine wash cold.,1299,M,VLM-EX-KURTI-M,1299,1099,10,true
+example-cotton-kurti,Example Cotton Kurti,kurtis,launch-edit,A sample straight-cut cotton kurti.,100% cotton,Machine wash cold.,1299,L,VLM-EX-KURTI-L,1299,1099,6,true
+example-cotton-kurti,Example Cotton Kurti,kurtis,launch-edit,A sample straight-cut cotton kurti.,100% cotton,Machine wash cold.,1299,XL,VLM-EX-KURTI-XL,1299,,3,true
+example-cotton-kurti,Example Cotton Kurti,kurtis,launch-edit,A sample straight-cut cotton kurti.,100% cotton,Machine wash cold.,1299,2XL,VLM-EX-KURTI-2XL,1299,,2,true
