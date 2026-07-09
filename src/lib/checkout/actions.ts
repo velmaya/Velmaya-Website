@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createRazorpayOrder } from "@/lib/razorpay/client";
 import { verifyRazorpaySignature } from "@/lib/razorpay/verify";
 import { finalizeOrderPaid } from "@/lib/orders/finalize";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { CartItem } from "@/lib/cart/types";
 import { repriceCart } from "./reprice";
 import {
@@ -67,6 +68,7 @@ export type PlaceOrderResult =
   | { ok: false; reason: "empty" }
   | { ok: false; reason: "stock_changed"; cart: RepricedCart }
   | { ok: false; reason: "checkout_unavailable" }
+  | { ok: false; reason: "rate_limited" }
   | { ok: false; reason: "error"; message: string };
 
 // Creates the order in `pending_payment`, reserves stock, opens a Razorpay
@@ -90,6 +92,14 @@ export async function placeOrder(payload: {
   const { items, shipping, previousOrderId } = payload;
 
   if (!items.length) return { ok: false, reason: "empty" };
+
+  // Deters checkout-spam / stock-locking abuse (see H3 in the audit). Ahead
+  // of validation so a flood of requests can't even reach the DB writes.
+  const allowed = await checkRateLimit("checkout:place-order", {
+    windowSeconds: 300,
+    max: 8,
+  });
+  if (!allowed) return { ok: false, reason: "rate_limited" };
 
   const errors = validateShipping(shipping);
   if (Object.keys(errors).length > 0)
@@ -256,6 +266,13 @@ export async function confirmPayment(input: {
   razorpayPaymentId: string;
   signature: string;
 }): Promise<ConfirmPaymentResult> {
+  const allowed = await checkRateLimit("checkout:confirm-payment", {
+    windowSeconds: 300,
+    max: 15,
+  });
+  if (!allowed)
+    return { ok: false, message: "Too many attempts — please wait a moment and try again." };
+
   const valid = verifyRazorpaySignature({
     orderId: input.razorpayOrderId,
     paymentId: input.razorpayPaymentId,

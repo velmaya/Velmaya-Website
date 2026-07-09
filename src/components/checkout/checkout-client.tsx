@@ -107,6 +107,12 @@ export function CheckoutClient() {
       case "empty":
         setStatus({ kind: "error", message: "Your bag is empty." });
         break;
+      case "rate_limited":
+        setStatus({
+          kind: "error",
+          message: "Too many attempts — please wait a moment and try again.",
+        });
+        break;
       default:
         setStatus({ kind: "error", message: result.message });
     }
