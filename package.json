@@ -13,6 +13,7 @@
     "verify:journey": "node --env-file=.env.local scripts/verify-journey.mjs",
     "verify:razorpay": "node --env-file=.env.local scripts/verify-razorpay.mjs",
     "verify:email": "node --env-file=.env.local scripts/verify-email.mjs",
+    "verify:cron": "node --env-file=.env.local scripts/verify-cron.mjs",
     "reconcile:payments": "node --env-file=.env.local scripts/reconcile-payments.mjs",
     "cf:build": "opennextjs-cloudflare build",
     "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",

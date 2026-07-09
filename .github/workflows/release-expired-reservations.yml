@@ -1,0 +1,29 @@
+name: Release expired inventory reservations
+
+# Calls the CRON_SECRET-protected sweep route every 5 minutes so abandoned
+# checkouts return their held stock (see docs/12-launch-readiness-audit.md,
+# finding H1). Inert until PRODUCTION_URL and CRON_SECRET repo secrets are
+# set (Settings -> Secrets and variables -> Actions) once the app is deployed.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  release-expired-reservations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call release-expired-reservations
+        run: |
+          if [ -z "${{ secrets.PRODUCTION_URL }}" ] || [ -z "${{ secrets.CRON_SECRET }}" ]; then
+            echo "PRODUCTION_URL or CRON_SECRET repo secret not set yet — skipping."
+            exit 0
+          fi
+          status=$(curl -s -o /tmp/body.json -w "%{http_code}" \
+            -X POST "${{ secrets.PRODUCTION_URL }}/api/cron/release-expired-reservations" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          cat /tmp/body.json
+          if [ "$status" != "200" ]; then
+            echo "Unexpected status $status"
+            exit 1
+          fi
