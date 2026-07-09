@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { sendOrderConfirmationEmails } from "@/lib/email/order-emails";
 
 // Single, idempotent place where a paid/failed payment finalizes an order.
 // Both the browser success callback (confirmPayment) and the Razorpay webhook
@@ -60,6 +61,17 @@ export async function finalizeOrderPaid(
     })
     .eq("order_id", args.orderId)
     .eq("status", "created");
+
+  // Order confirmation email — finalizeOrderPaid is the single source of
+  // truth for this, so it fires regardless of whether the webhook or the
+  // browser callback won the race, exactly once (see order-emails.ts). A
+  // failed send is logged, never surfaced — payment finalization has already
+  // succeeded by this point and must not be undone by an email problem.
+  try {
+    await sendOrderConfirmationEmails(db, args.orderId);
+  } catch (err) {
+    console.error("finalizeOrderPaid: email dispatch threw unexpectedly", args.orderId, err);
+  }
 
   return { status: "finalized" };
 }
