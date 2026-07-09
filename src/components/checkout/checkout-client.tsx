@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ShoppingBag } from "lucide-react";
@@ -40,6 +40,10 @@ export function CheckoutClient() {
   const [values, setValues] = useState<ShippingValues>(emptyShipping);
   const [errors, setErrors] = useState<ShippingErrors>({});
   const [status, setStatus] = useState<Status>({ kind: "loading" });
+  // Tracks the order created by the last placeOrder call so a retry (after a
+  // dismissed Razorpay modal) releases that hold instead of stacking a new
+  // one on top — see placeOrder's previousOrderId param.
+  const lastOrderId = useRef<string | null>(null);
 
   // Authoritative server-side reprice whenever the cart contents change.
   useEffect(() => {
@@ -77,9 +81,14 @@ export function CheckoutClient() {
     }
 
     setStatus({ kind: "submitting" });
-    const result = await placeOrder({ items, shipping: values });
+    const result = await placeOrder({
+      items,
+      shipping: values,
+      previousOrderId: lastOrderId.current ?? undefined,
+    });
 
     if (result.ok) {
+      lastOrderId.current = result.orderId;
       await launchPayment(result);
       return;
     }
@@ -126,6 +135,7 @@ export function CheckoutClient() {
           signature: r.razorpay_signature,
         });
         if (confirmed.ok) {
+          lastOrderId.current = null;
           clear();
           router.push(
             `/checkout/confirmation?order=${encodeURIComponent(confirmed.orderNumber)}`

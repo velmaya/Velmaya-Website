@@ -24,6 +24,30 @@ function razorpayConfigured() {
   return !!process.env.RAZORPAY_KEY_ID && !!process.env.RAZORPAY_KEY_SECRET;
 }
 
+type DB = ReturnType<typeof createSupabaseServerClient>;
+
+// Releases a prior attempt's hold before a retry creates a new one. Only
+// touches the order if it's still pending_payment (never a paid/failed/
+// cancelled/refunded order) and the phone matches the current submission —
+// a cheap sanity check against an unrelated order id being passed in, given
+// there's no auth layer yet to check real ownership.
+async function releaseIfStillPending(db: DB, orderId: string, phone: string) {
+  const { data: order } = await db
+    .from("orders")
+    .select("id, status, shipping_phone")
+    .eq("id", orderId)
+    .single();
+
+  if (!order || order.status !== "pending_payment") return;
+  if (order.shipping_phone !== phone) return;
+
+  await db.rpc("release_reservations", { p_order_id: order.id });
+  await db
+    .from("orders")
+    .update({ status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("id", order.id);
+}
+
 // Authoritative summary for the checkout page — recomputed server-side.
 export async function prepareCheckout(
   items: CartItem[]
@@ -49,11 +73,21 @@ export type PlaceOrderResult =
 // order, and returns the handoff so the client can launch Razorpay Checkout.
 // Fulfillment is finalized later by the verified webhook (and the browser
 // callback) — see confirmPayment + the webhook route.
+//
+// previousOrderId: if the caller is retrying after a dismissed/declined
+// payment, pass the order id from the prior placeOrder call. That order's
+// hold is released and it's marked cancelled BEFORE the new reservation is
+// made, so a retry never double-holds the same stock (see
+// docs/12-launch-readiness-audit.md, H2). Razorpay Checkout's own in-modal
+// retry (picking another payment method without closing the modal) never
+// reaches this code path at all — only a fully dismissed modal + a fresh
+// "Pay securely" click does.
 export async function placeOrder(payload: {
   items: CartItem[];
   shipping: ShippingValues;
+  previousOrderId?: string;
 }): Promise<PlaceOrderResult> {
-  const { items, shipping } = payload;
+  const { items, shipping, previousOrderId } = payload;
 
   if (!items.length) return { ok: false, reason: "empty" };
 
@@ -73,6 +107,10 @@ export async function placeOrder(payload: {
 
   try {
     const supabase = createSupabaseServerClient();
+
+    if (previousOrderId) {
+      await releaseIfStillPending(supabase, previousOrderId, shipping.phone.trim());
+    }
 
     // 1. Upsert customer by phone.
     const { data: customer } = await supabase
