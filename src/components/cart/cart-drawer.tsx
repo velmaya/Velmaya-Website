@@ -18,18 +18,47 @@ export function CartDrawer() {
   const { items, subtotal, count, isOpen, closeCart, updateQty, removeItem } =
     useCart();
   const panelRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
+  // Lock body scroll, move focus into the drawer, and trap Tab + Escape while
+  // open — same pattern as mobile-nav.tsx — plus restore focus to whatever
+  // opened the drawer (cart icon, an "Add to bag" button, etc.) on close,
+  // since the cart can be opened from many different trigger elements.
   useEffect(() => {
     if (!isOpen) return;
-    const prev = document.body.style.overflow;
+
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") closeCart();
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        closeCart();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables = panelRef.current?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
-    document.addEventListener("keydown", onKey);
+
+    document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.body.style.overflow = prev;
-      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      if (triggerRef.current?.isConnected) triggerRef.current.focus();
     };
   }, [isOpen, closeCart]);
 
@@ -63,6 +92,7 @@ export function CartDrawer() {
                 Your bag{count > 0 ? ` (${count})` : ""}
               </h2>
               <button
+                ref={closeRef}
                 type="button"
                 onClick={closeCart}
                 aria-label="Close bag"
