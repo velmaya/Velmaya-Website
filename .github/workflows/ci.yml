@@ -1,0 +1,40 @@
+name: CI
+
+# Minimal launch-safe gate (H6, docs/12-launch-readiness-audit.md). Scoped to
+# what's cheap, fast, and safe to run on every push/PR with zero secrets — see
+# docs/14-ci-and-manual-verification.md for what's intentionally NOT here and
+# why.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      # No separate "typecheck" script exists in package.json — `next build`
+      # below already runs a full TypeScript check as part of its own
+      # pipeline (see its "Linting and checking validity of types" step), so
+      # a standalone `tsc --noEmit` step would just repeat that work. If a
+      # dedicated typecheck script is ever added, wire it in here.
+
+      # No Supabase/Razorpay/Resend env vars are set for this job on purpose
+      # (see docs/14). src/lib/products/queries.ts falls back to a bundled
+      # mock catalogue when NEXT_PUBLIC_SUPABASE_URL /
+      # SUPABASE_SERVICE_ROLE_KEY aren't set, so the build below succeeds
+      # fully offline — confirmed locally by building with .env.local
+      # removed before writing this workflow.
+      - run: npm run build
