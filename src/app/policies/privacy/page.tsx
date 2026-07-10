@@ -17,7 +17,7 @@ export default function PrivacyPage() {
           <p className="text-sm text-muted-foreground">Last updated: [DATE]</p>
           <p>
             Velmaya (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;)
-            operates velmaya.com. This Privacy Policy explains what information
+            operates shopvelmaya.com. This Privacy Policy explains what information
             we collect, how we use it, and your rights regarding it.
           </p>
 

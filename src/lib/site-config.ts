@@ -7,7 +7,7 @@ export const siteConfig = {
   tagline: "Everyday ethnic wear, made to fit",
   description:
     "Kurtis, kurti sets, short kurtis and co-ord sets designed for everyday wear, in sizes XS–2XL.",
-  url: "https://velmaya.com",
+  url: "https://shopvelmaya.com",
 
   contact: {
     whatsapp: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "919597075752",

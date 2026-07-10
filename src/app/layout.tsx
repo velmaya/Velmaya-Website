@@ -20,7 +20,7 @@ const velmayaSans = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://velmaya.com"),
+  metadataBase: new URL("https://shopvelmaya.com"),
   title: {
     default: "Velmaya — Everyday Ethnic Wear",
     template: "%s · Velmaya",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     title: "Velmaya — Everyday Ethnic Wear",
     description:
       "Everyday ethnic wear made to fit, sizes XS–2XL. Crafted in Tamil Nadu.",
-    url: "https://velmaya.com",
+    url: "https://shopvelmaya.com",
     siteName: "Velmaya",
     images: [{ url: "/brand/logo-horizontal.png", width: 1672, height: 941 }],
     locale: "en_IN",

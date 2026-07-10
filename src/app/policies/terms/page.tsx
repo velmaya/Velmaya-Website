@@ -16,7 +16,7 @@ export default function TermsPage() {
         <Prose>
           <p className="text-sm text-muted-foreground">Last updated: [DATE]</p>
           <p>
-            By accessing or purchasing from velmaya.com, you agree to the
+            By accessing or purchasing from shopvelmaya.com, you agree to the
             following terms.
           </p>
 
