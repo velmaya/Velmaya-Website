@@ -18,19 +18,51 @@ Stage 5 (not yet started) was the trigger for this audit.
 
 ---
 
+## Resolution status (post-audit)
+
+**All 7 HIGH findings are now resolved.** Findings below are left exactly as
+originally written (this was, and remains, a read-only audit at the time it
+was performed) — this section only records what was done afterward, in a
+separate pass, with links back to the exact commits.
+
+| # | Status | Commit(s) | Notes |
+|---|---|---|---|
+| H1 | ✅ Resolved | `f8128b5` | Cron route + GitHub Actions schedule + `verify:cron` |
+| H2 | ✅ Resolved | `95dae5f` | `verify:retry` — 7/7 |
+| H3 | ✅ Resolved | `f22bd61`, `c288708` | Rate limiting (`f22bd61`, `verify:rate-limit` 4/4) + unauthenticated PoC route removal (`c288708`) |
+| H4 | ✅ Resolved | `d45126a` | Documentation/runbook only (`docs/13-production-deployment-cloudflare.md`) — actual secret values must still be entered manually by the project owner; see that doc's checklist |
+| H5 | ✅ Resolved | `a70dc08` | Index migration, applied directly to Supabase Production |
+| H6 | ✅ Resolved | `df64c32` | Minimal lint+build CI gate — see `docs/14-ci-and-manual-verification.md` for what's deliberately still manual and why |
+| H7 | ✅ Resolved | `98bcf63` | Cart drawer focus trap, reusing the `mobile-nav.tsx` pattern |
+
+**Commit-label note:** two commit messages don't match this doc's own H-numbering
+— `a70dc08` says "fix(H4)" in its subject line but is actually this doc's H5
+(the index migration); `c288708` says "fix(H3)" but is primarily this doc's
+M15 (PoC route removal), done alongside the real H3 (rate limiting) work.
+Recorded here so a future `git log` reader isn't misled by the commit
+subject lines — the table above reflects the correct mapping to this
+document's numbering.
+
+**Verification:** the full local gate (`verify:supabase`, `verify:retry`,
+`verify:rate-limit`, `verify:razorpay`, `verify:email`, `verify:cron`, all
+running against a live local dev server, plus `npm run build`) was re-run
+after all seven fixes landed and passed 51/51 checks, build clean.
+
+---
+
 ## Severity summary
 
 ### HIGH — should be resolved before real customers transact
 
-| # | Finding | Area |
-|---|---|---|
-| H1 | No automated sweep for expired inventory reservations — stock never self-releases from abandoned checkouts | Inventory flow |
-| H2 | Payment retry after a decline creates a **new** order + reservation instead of resuming the pending one, compounding H1 | Payment / inventory flow |
-| H3 | No rate limiting anywhere (checkout, webhook, PoC routes) | Security |
-| H4 | No documented or working path to set production secrets on Cloudflare — `wrangler.jsonc` `vars: {}` is empty | Deployment / env vars |
-| H5 | `orders.razorpay_order_id` has no index — every webhook delivery does a full table scan | Database |
-| H6 | No CI/CD and no automated test suite for a payment-processing system | Production readiness |
-| H7 | Cart drawer has no focus trap (WCAG 2.1 AA violation) | Accessibility |
+| # | Finding | Area | Status |
+|---|---|---|---|
+| H1 | No automated sweep for expired inventory reservations — stock never self-releases from abandoned checkouts | Inventory flow | ✅ Resolved — `f8128b5` |
+| H2 | Payment retry after a decline creates a **new** order + reservation instead of resuming the pending one, compounding H1 | Payment / inventory flow | ✅ Resolved — `95dae5f` |
+| H3 | No rate limiting anywhere (checkout, webhook, PoC routes) | Security | ✅ Resolved — `f22bd61`, `c288708` |
+| H4 | No documented or working path to set production secrets on Cloudflare — `wrangler.jsonc` `vars: {}` is empty | Deployment / env vars | ✅ Resolved — `d45126a` |
+| H5 | `orders.razorpay_order_id` has no index — every webhook delivery does a full table scan | Database | ✅ Resolved — `a70dc08` |
+| H6 | No CI/CD and no automated test suite for a payment-processing system | Production readiness | ✅ Resolved — `df64c32` |
+| H7 | Cart drawer has no focus trap (WCAG 2.1 AA violation) | Accessibility | ✅ Resolved — `98bcf63` |
 
 ### MEDIUM
 
@@ -402,5 +434,9 @@ Already covered above by reference — consolidated here for scanning:
 4. Everything MEDIUM/LOW — mostly independent, can be picked up in any order
    or deferred past initial launch without blocking real transactions.
 
-No implementation has been done as part of this audit — awaiting direction on
-which items to act on before Stage 5.
+No implementation had been done as part of the original audit itself — all
+findings above were read-only observations at the time this document was
+first written. **All 7 HIGH items were subsequently resolved in separate,
+individually committed and verified changes — see "Resolution status
+(post-audit)" near the top of this document.** MEDIUM/LOW items remain open
+and unscheduled as of the HIGH-item resolution pass.
