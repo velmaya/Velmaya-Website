@@ -51,3 +51,10 @@ scripts/logo-preview.png
 # claude local files
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# catalogue source images — staged product photos, not committed (see
+# catalogue/README.md). Keep the folder-structure guide files tracked.
+catalogue/images/**
+!catalogue/images/**/
+!catalogue/images/**/README.txt
+!catalogue/images/**/.gitkeep
